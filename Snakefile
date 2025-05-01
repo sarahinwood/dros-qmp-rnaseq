@@ -38,69 +38,51 @@ rule target:
         'output/02_salmon/multiqc/multiqc_report.html',
         ## deseq2
         expand('output/03_deseq/PCA/PCA_timepoint_treatment_{seq_batch}.pdf', seq_batch=["both_batches", "first_batch"]),
-        expand('output/03_deseq/time_treatment_pairwise_both_batches/{dds_file}/sig_annots_12hr.csv', dds_file=["both_batches", "both_batches_filtered"]),
-        expand('output/03_deseq/time_treatment_pairwise_first_batches/{dds_file}/sig_annots_12hr.csv', dds_file=["first_batch", "first_batch_filtered"])
+        expand('output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_12hr.csv', dds_file=["both_batches", "both_batches_filtered"]),
+        expand('output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_12hr.csv', dds_file=["first_batch", "first_batch_filtered"])
 
 ##########################
 ## 03 - deseq2 analysis ##
 ##########################
 
-## far less
-rule deseq2_time_treatment_pairwise_first_batch:
+rule deseq2_time_treatment_interaction_LRT_first_batch:
     input:
-        dds_file = 'output/03_deseq/dds_{dds_file}.rds',
+        dds_file = 'output/03_deseq/dds_files/dds_{dds_file}.rds',
         gtf_file = 'data/misc_dmel-r6.63_files/dmel-all-r6.63.gtf'
     output:
-        dds = 'output/03_deseq/time_treatment_pairwise_first_batches/{dds_file}/dds.rds',
-        res_12hr = 'output/03_deseq/time_treatment_pairwise_first_batches/{dds_file}/sig_annots_12hr.csv',
-        res_24hr = 'output/03_deseq/time_treatment_pairwise_first_batches/{dds_file}/sig_annots_24hr.csv',
-        res_48hr = 'output/03_deseq/time_treatment_pairwise_first_batches/{dds_file}/sig_annots_48hr.csv',
-        res_120hr = 'output/03_deseq/time_treatment_pairwise_first_batches/{dds_file}/sig_annots_120hr.csv'
+        dds = 'output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_dds.rds',
+        res_12hr = 'output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_12hr.csv',
+        res_24hr = 'output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_24hr.csv',
+        res_48hr = 'output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_48hr.csv',
+        res_120hr = 'output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_120hr.csv'
     log:
-        'output/logs/deseq2_time_treatment_pairwise_{dds_file}.log'
+        'output/logs/deseq2_time_treatment_interaction_LRT_first_batch_{dds_file}.log'
     singularity:
         bioconductor_container
     script:
-        'src/deseq2_time_treatment_pairwise_first_batch.R'
+        'src/deseq2_time_treatment_interaction_LRT_first_batch.R'
 
 ## filtered or not pretty similar except for 120 hrs
-rule deseq2_time_treatment_pairwise:
+rule time_treatment_interaction_LRT:
     input:
-        dds_file = 'output/03_deseq/dds_{dds_file}.rds',
+        dds_file = 'output/03_deseq/dds_files/dds_{dds_file}.rds',
         gtf_file = 'data/misc_dmel-r6.63_files/dmel-all-r6.63.gtf'
     output:
-        dds = 'output/03_deseq/time_treatment_pairwise_both_batches/{dds_file}/dds.rds',
-        res_12hr = 'output/03_deseq/time_treatment_pairwise_both_batches/{dds_file}/sig_annots_12hr.csv',
-        res_24hr = 'output/03_deseq/time_treatment_pairwise_both_batches/{dds_file}/sig_annots_24hr.csv',
-        res_48hr = 'output/03_deseq/time_treatment_pairwise_both_batches/{dds_file}/sig_annots_48hr.csv',
-        res_120hr = 'output/03_deseq/time_treatment_pairwise_both_batches/{dds_file}/sig_annots_120hr.csv'
+        dds = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_dds.rds',
+        res_12hr = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_12hr.csv',
+        res_24hr = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_24hr.csv',
+        res_48hr = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_48hr.csv',
+        res_120hr = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_120hr.csv'
     log:
-        'output/logs/deseq2_time_treatment_pairwise_{dds_file}.log'
+        'output/logs/deseq2_time_treatment_interaction_LRT_{dds_file}.log'
     singularity:
         bioconductor_container
     script:
-        'src/deseq2_time_treatment_pairwise.R'
-
-rule deseq2_treatment_pairwise:
-    input:
-        dds_file = 'output/03_deseq/dds_{dds_file}.rds',
-        gtf_file = 'data/misc_dmel-r6.63_files/dmel-all-r6.63.gtf'
-    output:
-        dds = 'output/03_deseq/treatment_pairwise/both_batches/{dds_file}/{dds_file}_dds.rds',
-        res_12hr = 'output/03_deseq/treatment_pairwise/both_batches/{dds_file}/{dds_file}_sig_annots_12hr.csv',
-        res_24hr = 'output/03_deseq/treatment_pairwise/both_batches/{dds_file}/{dds_file}_sig_annots_24hr.csv',
-        res_48hr = 'output/03_deseq/treatment_pairwise/both_batches/{dds_file}/{dds_file}_sig_annots_48hr.csv',
-        res_120hr = 'output/03_deseq/treatment_pairwise/both_batches/{dds_file}/{dds_file}_sig_annots_120hr.csv'
-    log:
-        'output/logs/deseq2_time_treatment_pairwise_{dds_file}.log'
-    singularity:
-        bioconductor_container
-    script:
-        'src/deseq2_time_treatment_pairwise.R'
+        'src/deseq2_time_treatment_interaction_LRT.R'
 
 rule deseq2_pca:
     input:
-        dds_file = 'output/03_deseq/dds_{seq_batch}.rds'
+        dds_file = 'output/03_deseq/dds_files/dds_{seq_batch}.rds'
     output:
         PCA_time = 'output/03_deseq/PCA/PCA_time_{seq_batch}.pdf',
         PCA_treatment = 'output/03_deseq/PCA/PCA_treatment_{seq_batch}.pdf',
@@ -118,10 +100,10 @@ rule make_deseq2_object:
         gtf_file = 'data/misc_dmel-r6.63_files/dmel-all-r6.63.gtf',
         sample_data_file = 'data/sample_table.csv'
     output:
-        dds_file = 'output/03_deseq/dds_both_batches.rds',
-        dds_filtered_file = 'output/03_deseq/dds_both_batches_filtered.rds',
-        dds_first_batch_file = 'output/03_deseq/dds_first_batch.rds',
-        dds_first_batch_filtered_file = 'output/03_deseq/dds_first_batch_filtered.rds'
+        dds_file = 'output/03_deseq/dds_files/dds_both_batches.rds',
+        dds_filtered_file = 'output/03_deseq/dds_files/dds_both_batches_filtered.rds',
+        dds_first_batch_file = 'output/03_deseq/dds_files/dds_first_batch.rds',
+        dds_first_batch_filtered_file = 'output/03_deseq/dds_files/dds_first_batch_filtered.rds'
     log:
         'output/logs/make_deseq2_object.log'
     singularity:
