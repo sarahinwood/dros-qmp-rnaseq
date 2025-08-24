@@ -45,7 +45,46 @@ rule target:
         expand('output/03_deseq/qmp_treatment/both_batches/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"both_batches", "both_batches_filtered", 
         #expand('output/03_deseq/qmp_treatment/first_batch/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["first_batch", "first_batch_filtered"]),
         expand('output/04_power_analysis/treatment/treatment_power_analysis_{dds_file}.csv', dds_file=["both_second_batch_120_filtered", "both_second_batch_120"]),
-        expand('output/04_power_analysis/time_treatment/time_treatment_power_analysis_{dds_file}.csv', dds_file=["both_second_batch_120_filtered", "both_second_batch_120"])
+        expand('output/04_power_analysis/time_treatment/time_treatment_power_analysis_{dds_file}.csv', dds_file=["both_second_batch_120_filtered", "both_second_batch_120"]),
+        ## enrichment
+        'output/05_go_enrichment/fgsea/time_treatment_interaction_sig_res.pdf',
+        'output/05_go_enrichment/clusterprofiler_overrep/time_treatment_interaction_plot.pdf'
+
+########################
+## 05 - GO enrichment ##
+########################
+
+rule fgsea_time_treatment_interaction:
+    input:
+        go_annots_file = 'data/dmel-r6.63_gene_association.fb',
+        go_to_name_file = 'data/GO_term_to_name.csv',
+        all_res_file = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/both_second_batch_120_filtered/both_second_batch_120_filtered_interaction_all_res_annots.csv',
+        background_genes_file = 'output/05_go_enrichment/clusterprofiler_overrep/time_treatment_interaction_background_genes.csv'
+    output:
+        fgsea_sig_res = 'output/05_go_enrichment/fgsea/time_treatment_interaction_sig_res.csv',
+        fgsea_sig_res_plot = 'output/05_go_enrichment/fgsea/time_treatment_interaction_sig_res.pdf'
+    log:
+        'output/logs/fgsea_time_treatment_interaction.log'
+    singularity:
+        bioconductor_container
+    script:
+        'src/fgsea_time_treatment_interaction.R'
+
+rule clusterprofiler_overrep_time_treatment_interaction:
+    input:
+        go_annots_file = 'data/dmel-r6.63_gene_association.fb',
+        go_to_name_file = 'data/GO_term_to_name.csv',
+        degs_file = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/both_second_batch_120_filtered/both_second_batch_120_filtered_interaction_sig_annots.csv',
+        dds_filtered_file = 'output/03_deseq/dds_files/dds_both_second_batch_120_filtered.rds'
+    output:
+        background = 'output/05_go_enrichment/clusterprofiler_overrep/time_treatment_interaction_background_genes.csv',
+        plot = 'output/05_go_enrichment/clusterprofiler_overrep/time_treatment_interaction_plot.pdf'
+    log:
+        'output/logs/clusterprofiler_overrep_time_treatment_interaction.log'
+    singularity:
+        bioconductor_container
+    script:
+        'src/clusterprofiler_overrep_time_treatment_interaction.R'
 
 #########################
 ## 04 - power analysis ##
@@ -92,7 +131,7 @@ rule deseq2_extra_120h_comps_first_batch:
     singularity:
         bioconductor_container
     script:
-        'src/deseq2_extra_120h_comps_first_batch.R'
+        'src/deseq2/deseq2_extra_120h_comps_first_batch.R'
 
 rule deseq2_extra_120h_comps:
     input:
@@ -107,7 +146,7 @@ rule deseq2_extra_120h_comps:
     singularity:
         bioconductor_container
     script:
-        'src/deseq2_extra_120h_comps.R'
+        'src/deseq2/deseq2_extra_120h_comps.R'
 
 rule deseq2_time_treatment_interaction_LRT_first_batch:
     input:
@@ -125,7 +164,7 @@ rule deseq2_time_treatment_interaction_LRT_first_batch:
     singularity:
         bioconductor_container
     script:
-        'src/deseq2_time_treatment_interaction_LRT_first_batch.R'
+        'src/deseq2/deseq2_time_treatment_interaction_LRT_first_batch.R'
 
 ## filtered or not pretty similar except for 120 hrs
 rule deseq2_time_treatment_interaction_LRT:
@@ -134,7 +173,8 @@ rule deseq2_time_treatment_interaction_LRT:
         gtf_file = 'data/misc_dmel-r6.63_files/dmel-all-r6.63.gtf'
     output:
         dds = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_dds.rds',
-        res_interaction = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_interaction_sig_annots.csv',
+        res_interaction = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_interaction_all_res_annots.csv',
+        sig_res_interaction = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_interaction_sig_annots.csv',
         res_12hr = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_12hr.csv',
         res_24hr = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_24hr.csv',
         res_48hr = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_48hr.csv',
@@ -144,7 +184,7 @@ rule deseq2_time_treatment_interaction_LRT:
     singularity:
         bioconductor_container
     script:
-        'src/deseq2_time_treatment_interaction_LRT.R'
+        'src/deseq2/deseq2_time_treatment_interaction_LRT.R'
 
 rule deseq2_qmp_treatment_first_batch:
     input:
@@ -158,7 +198,7 @@ rule deseq2_qmp_treatment_first_batch:
     singularity:
         bioconductor_container
     script:
-        'src/deseq2_qmp_treatment_first_batch.R'
+        'src/deseq2/deseq2_qmp_treatment_first_batch.R'
 
 rule deseq2_qmp_treatment:
     input:
@@ -172,7 +212,7 @@ rule deseq2_qmp_treatment:
     singularity:
         bioconductor_container
     script:
-        'src/deseq2_qmp_treatment.R'
+        'src/deseq2/deseq2_qmp_treatment.R'
 
 rule deseq2_pca:
     input:
@@ -186,7 +226,7 @@ rule deseq2_pca:
     singularity:
         bioconductor_container
     script:
-        'src/deseq2_pca.R'
+        'src/deseq2/deseq2_pca.R'
 
 rule make_deseq2_object:
     input:
