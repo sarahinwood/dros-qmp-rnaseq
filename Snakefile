@@ -37,18 +37,43 @@ rule target:
         ## salmon report
         'output/02_salmon/multiqc/multiqc_report.html',
         ## deseq2
-        #expand('output/03_deseq/PCA/PCA_timepoint_treatment_{seq_batch}.pdf', seq_batch=["both_batches", "first_batch", "both_second_batch_120"]),
+        expand('output/03_deseq/PCA/PCA_timepoint_treatment_{seq_batch}.pdf', seq_batch=["both_batches", "first_batch", "both_second_batch_120"]),
         expand('output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_12hr.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"both_batches", "both_batches_filtered", 
-        #expand('output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_12hr.csv', dds_file=["first_batch", "first_batch_filtered"]),
-        #expand('output/03_deseq/deseq2_extra_120h_comps/{dds_file}/{dds_file}_sig_annots_removed_nc.csv', dds_file=["both_batches", "both_batches_filtered"]),
+        expand('output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_12hr.csv', dds_file=["first_batch", "first_batch_filtered"]),
+        expand('output/03_deseq/deseq2_extra_120h_comps/{dds_file}/{dds_file}_sig_annots_removed_nc.csv', dds_file=["both_batches", "both_batches_filtered"]),
         expand('output/03_deseq/deseq2_extra_120h_comps/first_batch/{dds_file}/{dds_file}_sig_annots_qmp_nc.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"first_batch", "first_batch_filtered", 
         expand('output/03_deseq/qmp_treatment/both_batches/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"both_batches", "both_batches_filtered", 
-        #expand('output/03_deseq/qmp_treatment/first_batch/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["first_batch", "first_batch_filtered"]),
+        expand('output/03_deseq/qmp_treatment/first_batch/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["first_batch", "first_batch_filtered"]),
         expand('output/04_power_analysis/treatment/treatment_power_analysis_{dds_file}.csv', dds_file=["both_second_batch_120_filtered", "both_second_batch_120"]),
         expand('output/04_power_analysis/time_treatment/time_treatment_power_analysis_{dds_file}.csv', dds_file=["both_second_batch_120_filtered", "both_second_batch_120"]),
         ## enrichment
         'output/05_go_enrichment/fgsea/time_treatment_interaction_sig_res.pdf',
-        'output/05_go_enrichment/clusterprofiler_overrep/time_treatment_interaction_plot.pdf'
+        'output/05_go_enrichment/clusterprofiler_overrep/time_treatment_interaction_plot.pdf',
+        'output/06_clustering_time_treatment_int/go_enrichment_clusters_plot.pdf'
+
+####################################################
+## 06 - cluster expression patterns & GO analysis ##
+####################################################
+
+rule clustering_time_treatment_interaction_patterns:
+    input:
+        sample_table_file = 'data/sample_table.csv',
+        deg_list_file = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/both_second_batch_120_filtered/both_second_batch_120_filtered_interaction_sig_annots.csv',
+        dds_file = 'output/03_deseq/dds_files/dds_both_second_batch_120_filtered.rds',
+        go_annots_file = 'data/dmel-r6.63_gene_association.fb',
+        go_to_name_file = 'data/GO_term_to_name.csv',
+        background_genes_file = 'output/05_go_enrichment/clusterprofiler_overrep/time_treatment_interaction_background_genes.csv'
+    output:
+        cluster_plot = 'output/06_clustering_time_treatment_int/cluster_plot.pdf',
+        genes_to_clusters = 'output/06_clustering_time_treatment_int/genes_to_clusters.csv',
+        go_res = 'output/06_clustering_time_treatment_int/go_enrichment_clusters_results.csv',
+        go_plot = 'output/06_clustering_time_treatment_int/go_enrichment_clusters_plot.pdf'
+    log:
+        'output/logs/clustering_time_treatment_interaction.log'
+    singularity:
+        bioconductor_container_with_degreport
+    script:
+        'src/GO_enrichment/clustering_time_treatment_interaction.R'
 
 ########################
 ## 05 - GO enrichment ##
@@ -68,7 +93,7 @@ rule fgsea_time_treatment_interaction:
     singularity:
         bioconductor_container
     script:
-        'src/fgsea_time_treatment_interaction.R'
+        'src/GO_enrichment/fgsea_time_treatment_interaction.R'
 
 rule clusterprofiler_overrep_time_treatment_interaction:
     input:
@@ -84,7 +109,7 @@ rule clusterprofiler_overrep_time_treatment_interaction:
     singularity:
         bioconductor_container
     script:
-        'src/clusterprofiler_overrep_time_treatment_interaction.R'
+        'src/GO_enrichment/clusterprofiler_overrep_time_treatment_interaction.R'
 
 #########################
 ## 04 - power analysis ##
@@ -245,7 +270,7 @@ rule make_deseq2_object:
     singularity:
         bioconductor_container
     script:
-        'src/make_deseq2_object.R'
+        'src/deseq2/make_deseq2_object.R'
 
 ## gff has lines commented out with ## that cause reading into R to be difficult
 

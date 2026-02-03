@@ -41,7 +41,10 @@ dds$treatment_type <- factor(dds$treatment_type)
 dds$time_treatment <- factor(paste(dds$timepoint, dds$treatment))
 
 ##transformation --> PCA
-vst <- varianceStabilizingTransformation(dds, blind=FALSE)
+# uses the design formula to calculate
+# the within-group variability (if blind=FALSE)
+# or the across-all-samples variability (if blind=TRUE).
+vst <- varianceStabilizingTransformation(dds, blind=TRUE)
 
 ## time ##
 pca_plot_time <- plotPCA(vst, intgroup=c("timepoint", "batch"), returnData=TRUE)
@@ -89,6 +92,9 @@ dev.off()
 
 pca_plot_time_treatment <- plotPCA(vst, intgroup=c("timepoint", "treatment", "batch"), returnData=TRUE)
 pca_plot_time_treatment$timepoint_treatment <- paste(pca_plot_time_treatment$timepoint, pca_plot_time_treatment$treatment)
+pca_plot_time_treatment$timepoint_treatment <- factor(pca_plot_time_treatment$timepoint_treatment,
+                                                      levels=c("12 control", "12 QMP", "24 control", "24 QMP",
+                                                               "48 control", "48 QMP", "120 control", "120 QMP", "120 removed"))
 
 percentVar_time_treatment <- round(100 * attr(pca_plot_time_treatment, "percentVar"))
 
@@ -99,8 +105,8 @@ ggplot(pca_plot_time_treatment, aes(x=PC1, y=PC2, shape=batch, colour=timepoint_
   geom_point(size=3)+
   scale_color_viridis(discrete=TRUE)+
   labs(shape="Batch", colour="Timepoint (hours) & Treatment")+
-  xlab(paste("PC1:", percentVar_treatment[1], "% variance")) + 
-  ylab(paste("PC2:", percentVar_treatment[2], "% variance")) + 
+  xlab(paste("PC1:", percentVar_time_treatment[1], "% variance")) + 
+  ylab(paste("PC2:", percentVar_time_treatment[2], "% variance")) + 
   coord_fixed(ratio=1)+
   theme_bw()
 dev.off()

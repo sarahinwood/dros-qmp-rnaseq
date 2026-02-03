@@ -49,10 +49,14 @@ txi <- tximport(quant_files, type = "salmon", tx2gene = tx2gene)
 
 ##Import table describing samples
 sample_data <- fread(sample_data_file, header=TRUE)
-setkey(sample_data, sample_name)
+# corrected sample sorting - file naming made this hard
+sample_table_sorted <- sample_data[match(names(quant_files), sample_data$sample_name), ]
+# check ordered correctly - should return TRUE
+all(names(quant_files)==sample_table_sorted$sample_name)
+all(colnames(txi) == rownames(sample_table_sorted))
 
 ## make dds
-dds <- DESeqDataSetFromTximport(txi, sample_data, ~1)
+dds <- DESeqDataSetFromTximport(txi, sample_table_sorted, ~1)
 saveRDS(dds, snakemake@output[["dds_file"]])
 
 ## filter out low counts - removes 4000-5000 genes
