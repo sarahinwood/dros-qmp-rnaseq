@@ -22,6 +22,7 @@ all_samples = pep.sample_table['sample_name']
 ## containers ##
 fastqc_container = 'docker://staphb/fastqc:0.12.1'
 multiqc_container = 'docker://staphb/multiqc:1.22.3'
+kraken_container = 'docker://staphb/kraken2:2.17.1'
 trimgalore_container = 'docker://quay.io/biocontainers/trim-galore:0.6.9--hdfd78af_0'
 salmon_container = 'docker://combinelab/salmon:1.10.3'
 bioconductor_container = 'library://sinwood/bioconductor/bioconductor_3.20:0.0.1'
@@ -33,47 +34,49 @@ bioconductor_container = 'library://sinwood/bioconductor/bioconductor_3.20:0.0.1
 rule target:
     input:
         ## trimming and QC report
+        'output/00_raw_reads/multiqc_pretrimming/multiqc_report.html',
         'output/01_read_prep/multiqc/multiqc_report.html',
+        expand('output/01_read_prep/kraken/reports/kraken_{sample}_report.txt', sample=all_samples),
         ## salmon report
         'output/02_salmon/multiqc/multiqc_report.html',
         ## deseq2
         expand('output/03_deseq/PCA/PCA_timepoint_treatment_{seq_batch}.pdf', seq_batch=["both_batches", "first_batch", "both_second_batch_120"]),
-        expand('output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_12hr.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"both_batches", "both_batches_filtered", 
-        expand('output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_12hr.csv', dds_file=["first_batch", "first_batch_filtered"]),
+        expand('output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_interaction_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"both_batches", "both_batches_filtered", 
         expand('output/03_deseq/deseq2_extra_120h_comps/{dds_file}/{dds_file}_sig_annots_removed_nc.csv', dds_file=["both_batches", "both_batches_filtered"]),
-        expand('output/03_deseq/deseq2_extra_120h_comps/first_batch/{dds_file}/{dds_file}_sig_annots_qmp_nc.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"first_batch", "first_batch_filtered", 
+        expand('output/03_deseq/deseq2_extra_120h_comps/first_batch/{dds_file}/{dds_file}_sig_annots_qmp_nc.csv', dds_file=["first_batch", "first_batch_filtered", ]), #"first_batch", "first_batch_filtered", 
+        expand('output/03_deseq/deseq2_extra_120h_comps/second_batch/{dds_file}/{dds_file}_sig_annots_qmp_nc.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"second_batch", "second_batch_filtered", 
         expand('output/03_deseq/qmp_treatment/both_batches/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"both_batches", "both_batches_filtered", 
         expand('output/03_deseq/qmp_treatment/first_batch/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["first_batch", "first_batch_filtered"]),
         expand('output/04_power_analysis/treatment/treatment_power_analysis_{dds_file}.csv', dds_file=["both_second_batch_120_filtered", "both_second_batch_120"]),
         expand('output/04_power_analysis/time_treatment/time_treatment_power_analysis_{dds_file}.csv', dds_file=["both_second_batch_120_filtered", "both_second_batch_120"]),
         ## enrichment
-        'output/05_go_enrichment/fgsea/time_treatment_interaction_sig_res.pdf',
-        'output/05_go_enrichment/clusterprofiler_overrep/time_treatment_interaction_plot.pdf',
-        'output/06_clustering_time_treatment_int/go_enrichment_clusters_plot.pdf'
+        #'output/05_go_enrichment/fgsea/time_treatment_interaction_sig_res.pdf',
+        #'output/05_go_enrichment/clusterprofiler_overrep/time_treatment_interaction_plot.pdf',
+        #'output/06_clustering_time_treatment_int/go_enrichment_clusters_plot.pdf'
 
 ####################################################
 ## 06 - cluster expression patterns & GO analysis ##
 ####################################################
 
-rule clustering_time_treatment_interaction_patterns:
-    input:
-        sample_table_file = 'data/sample_table.csv',
-        deg_list_file = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/both_second_batch_120_filtered/both_second_batch_120_filtered_interaction_sig_annots.csv',
-        dds_file = 'output/03_deseq/dds_files/dds_both_second_batch_120_filtered.rds',
-        go_annots_file = 'data/dmel-r6.63_gene_association.fb',
-        go_to_name_file = 'data/GO_term_to_name.csv',
-        background_genes_file = 'output/05_go_enrichment/clusterprofiler_overrep/time_treatment_interaction_background_genes.csv'
-    output:
-        cluster_plot = 'output/06_clustering_time_treatment_int/cluster_plot.pdf',
-        genes_to_clusters = 'output/06_clustering_time_treatment_int/genes_to_clusters.csv',
-        go_res = 'output/06_clustering_time_treatment_int/go_enrichment_clusters_results.csv',
-        go_plot = 'output/06_clustering_time_treatment_int/go_enrichment_clusters_plot.pdf'
-    log:
-        'output/logs/clustering_time_treatment_interaction.log'
-    singularity:
-        bioconductor_container_with_degreport
-    script:
-        'src/GO_enrichment/clustering_time_treatment_interaction.R'
+# rule clustering_time_treatment_interaction_patterns:
+#     input:
+#         sample_table_file = 'data/sample_table.csv',
+#         deg_list_file = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/both_second_batch_120_filtered/both_second_batch_120_filtered_interaction_sig_annots.csv',
+#         dds_file = 'output/03_deseq/dds_files/dds_both_second_batch_120_filtered.rds',
+#         go_annots_file = 'data/dmel-r6.63_gene_association.fb',
+#         go_to_name_file = 'data/GO_term_to_name.csv',
+#         background_genes_file = 'output/05_go_enrichment/clusterprofiler_overrep/time_treatment_interaction_background_genes.csv'
+#     output:
+#         cluster_plot = 'output/06_clustering_time_treatment_int/cluster_plot.pdf',
+#         genes_to_clusters = 'output/06_clustering_time_treatment_int/genes_to_clusters.csv',
+#         go_res = 'output/06_clustering_time_treatment_int/go_enrichment_clusters_results.csv',
+#         go_plot = 'output/06_clustering_time_treatment_int/go_enrichment_clusters_plot.pdf'
+#     log:
+#         'output/logs/clustering_time_treatment_interaction.log'
+#     singularity:
+#         bioconductor_container_with_degreport
+#     script:
+#         'src/GO_enrichment/clustering_time_treatment_interaction.R'
 
 ########################
 ## 05 - GO enrichment ##
@@ -143,6 +146,25 @@ rule treatment_power_analysis_both_second_batch_120:
 ## 03 - deseq2 analysis ##
 ##########################
 
+rule deseq2_extra_120h_comps_second_batch:
+    input:
+        dds_file = 'output/03_deseq/dds_files/dds_{dds_file}.rds',
+        gtf_file = 'data/misc_dmel-r6.63_files/dmel-all-r6.63.gtf'
+    output:
+        res_qmp_nc = 'output/03_deseq/deseq2_extra_120h_comps/second_batch/{dds_file}/{dds_file}_sig_annots_qmp_nc.csv',
+        res_removed_nc = 'output/03_deseq/deseq2_extra_120h_comps/second_batch/{dds_file}/{dds_file}_sig_annots_removed_nc.csv',
+        res_removed_qmp = 'output/03_deseq/deseq2_extra_120h_comps/second_batch/{dds_file}/{dds_file}_sig_annots_removed_qmp.csv',
+        dds_res = 'output/03_deseq/deseq2_extra_120h_comps/second_batch/{dds_file}/{dds_file}_dds_res.rds',
+        qmp_nc_heatmap = "output/03_deseq/deseq2_extra_120h_comps/second_batch/{dds_file}/{dds_file}_qmp_nc_heatmap.pdf",
+        removed_nc_heatmap = "output/03_deseq/deseq2_extra_120h_comps/second_batch/{dds_file}/{dds_file}_removed_nc_heatmap.pdf",
+        removed_qmp_heatmap = "output/03_deseq/deseq2_extra_120h_comps/second_batch/{dds_file}/{dds_file}_removed_qmp_heatmap.pdf"
+    log:
+        'output/logs/deseq2_extra_120h_comps_second_batch_{dds_file}.log'
+    singularity:
+        bioconductor_container
+    script:
+        'src/deseq2/deseq2_extra_120h_comps_second_batch.R'
+
 rule deseq2_extra_120h_comps_first_batch:
     input:
         dds_file = 'output/03_deseq/dds_files/dds_{dds_file}.rds',
@@ -173,24 +195,6 @@ rule deseq2_extra_120h_comps:
     script:
         'src/deseq2/deseq2_extra_120h_comps.R'
 
-rule deseq2_time_treatment_interaction_LRT_first_batch:
-    input:
-        dds_file = 'output/03_deseq/dds_files/dds_{dds_file}.rds',
-        gtf_file = 'data/misc_dmel-r6.63_files/dmel-all-r6.63.gtf'
-    output:
-        dds = 'output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_dds.rds',
-        res_interaction = 'output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_interaction_sig_annots.csv',
-        res_12hr = 'output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_12hr.csv',
-        res_24hr = 'output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_24hr.csv',
-        res_48hr = 'output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_48hr.csv',
-        res_120hr = 'output/03_deseq/time_treatment_interaction_LRT/first_batch/{dds_file}/{dds_file}_sig_annots_120hr.csv'
-    log:
-        'output/logs/deseq2_time_treatment_interaction_LRT_first_batch_{dds_file}.log'
-    singularity:
-        bioconductor_container
-    script:
-        'src/deseq2/deseq2_time_treatment_interaction_LRT_first_batch.R'
-
 ## filtered or not pretty similar except for 120 hrs
 rule deseq2_time_treatment_interaction_LRT:
     input:
@@ -199,11 +203,7 @@ rule deseq2_time_treatment_interaction_LRT:
     output:
         dds = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_dds.rds',
         res_interaction = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_interaction_all_res_annots.csv',
-        sig_res_interaction = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_interaction_sig_annots.csv',
-        res_12hr = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_12hr.csv',
-        res_24hr = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_24hr.csv',
-        res_48hr = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_48hr.csv',
-        res_120hr = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_sig_annots_120hr.csv'
+        sig_res_interaction = 'output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_interaction_sig_annots.csv'
     log:
         'output/logs/deseq2_time_treatment_interaction_LRT_{dds_file}.log'
     singularity:
@@ -347,9 +347,9 @@ rule salmon_index:
 
 rule read_prep_multiqc:
     input:
-        untrimmed_fastqc = expand('output/01_read_prep/fastqc/untrimmed/{sample}_r{n}_fastqc.html', sample=all_samples, n=[1, 2]),
         trimmed_fastqc = expand('output/01_read_prep/fastqc/trimmed/{sample}_r{n}_fastqc.html', sample=all_samples, n=[1, 2]),
-        trimming = expand('output/logs/trimgalore/{sample}.log', sample=all_samples)
+        trimming = expand('output/logs/trimgalore/{sample}.log', sample=all_samples),
+        kraken = expand('output/01_read_prep/kraken/reports/kraken_{sample}_report.txt', sample=all_samples)
     output:
         'output/01_read_prep/multiqc/multiqc_report.html'
     params:
@@ -366,6 +366,34 @@ rule read_prep_multiqc:
         '&> {log}'
 
 #    reason: Missing output files: output/01_read_prep/fastqc/trimmed/4872etoh-2_r1_fastqc.html; Input files updated by another job: output/01_read_prep/trimgalore/4872etoh-2_r1.fq.gz
+
+rule kraken_reads:
+    input:
+        r1 = 'output/01_read_prep/trimgalore/{sample}_r1.fq.gz',
+        r2 = 'output/01_read_prep/trimgalore/{sample}_r2.fq.gz',
+        db = 'bin/2024_12_28_standard'
+    output:
+        out = 'output/01_read_prep/kraken/kraken_{sample}_out.txt',
+        report = 'output/01_read_prep/kraken/reports/kraken_{sample}_report.txt'
+    log:
+        'output/logs/kraken_{sample}.log'
+    threads:
+        10
+    resources:
+        mem_mb=160000
+    singularity:
+        kraken_container
+    shell:
+        'kraken2 '
+        '--threads {threads} '
+        '--db {input.db} '
+        '--paired '
+        '--output {output.out} '
+        '--report {output.report} '
+        '--use-names '
+        '--report-zero-counts '
+        '{input.r1} {input.r2} '
+        '&> {log}'
 
 rule fastqc_posttrimming:
     input:
@@ -389,8 +417,8 @@ rule rename_trimgalore_output:
 
 rule trimgalore:
     input:
-        r1 = 'output/01_read_prep/joined/{sample}_r1.fq.gz',
-        r2 = 'output/01_read_prep/joined/{sample}_r2.fq.gz'
+        r1 = 'output/00_raw_reads/joined/{sample}_r1.fq.gz',
+        r2 = 'output/00_raw_reads/joined/{sample}_r2.fq.gz'
     output:
         r1_trimmed = 'output/01_read_prep/trimgalore/{sample}_r1_val_1.fq.gz',
         r2_trimmed = 'output/01_read_prep/trimgalore/{sample}_r2_val_2.fq.gz'
@@ -411,13 +439,31 @@ rule trimgalore:
         '{input.r1} {input.r2} '
         '&> {log}'
 
+rule multiqc_pretrimming:
+    input:
+        untrimmed_fastqc = expand('output/00_raw_reads/fastqc/untrimmed/{sample}_r{n}_fastqc.html', sample=all_samples, n=[1, 2])
+    output:
+        'output/00_raw_reads/multiqc_pretrimming/multiqc_report.html'
+    params:
+        analysis_dir = 'output/00_raw_reads/fastqc/untrimmed',
+        outdir = 'output/00_raw_reads/multiqc_pretrimming'
+    log:
+        'output/logs/multiqc_pretrimming.log'
+    singularity:
+        multiqc_container
+    shell:
+        'multiqc -f ' ##force to write over old output if it exists
+        '{params.analysis_dir} '
+        '-o {params.outdir} '
+        '&> {log}'
+
 rule fastqc_pretrimming:
     input:
-        'output/01_read_prep/joined/{sample}_r{n}.fq.gz'
+        'output/00_raw_reads/joined/{sample}_r{n}.fq.gz'
     output:
-        'output/01_read_prep/fastqc/untrimmed/{sample}_r{n}_fastqc.html'
+        'output/00_raw_reads/fastqc/untrimmed/{sample}_r{n}_fastqc.html'
     params:
-        wd = 'output/01_read_prep/fastqc/untrimmed'
+        wd = 'output/00_raw_reads/fastqc/untrimmed'
     singularity:
         fastqc_container
     shell:
@@ -427,8 +473,8 @@ rule join_reads:
     input:
         unpack(get_reads)
     output:
-        r1 = 'output/01_read_prep/joined/{sample}_r1.fq.gz',
-        r2 = 'output/01_read_prep/joined/{sample}_r2.fq.gz',
+        r1 = 'output/00_raw_reads/joined/{sample}_r1.fq.gz',
+        r2 = 'output/00_raw_reads/joined/{sample}_r2.fq.gz',
     shell:
         'cat {input.l1r1} {input.l2r1} > {output.r1} & '
         'cat {input.l1r2} {input.l2r2} > {output.r2} & '
