@@ -1,7 +1,3 @@
-library(data.table)
-library(DESeq2)
-library(rtracklayer)
-
 #!/usr/bin/env Rscript
 
 #######
@@ -55,6 +51,7 @@ dds_wald <- dds
 # run DESeq
 design(dds_wald) <- ~ batch + group
 dds_wald <- DESeq(dds_wald)
+saveRDS(dds_wald, snakemake@output[[dds_wald]])
 
 ## can then pull out results for individual timepoints as contained below
 resultsNames(dds_wald)
@@ -110,3 +107,6 @@ res_120h_table <- data.table(data.frame(res_120h_ordered), keep.rownames = TRUE)
 res_120h_sig <- subset(res_120h_table, padj < 0.05)
 res_120h_sig_annot <- merge(res_120h_sig, gene_to_name, by.x = "rn", by.y = "gene_id")
 fwrite(res_120h_sig_annot, snakemake@output[["res_120hr"]])
+
+# write log
+sessionInfo()

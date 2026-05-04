@@ -41,10 +41,12 @@ rule target:
         'output/02_salmon/multiqc/multiqc_report.html',
         ## deseq2
         expand('output/03_deseq/PCA/PCA_timepoint_treatment_{seq_batch}.pdf', seq_batch=["both_batches", "first_batch", "both_second_batch_120"]),
+        expand('output/03_deseq/qmp_treatment/both_batches/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), 
         expand('output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_interaction_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), 
+        expand('output/03_deseq/time_treatment_wald/both_batches/{dds_file}/{dds_file}_wald_12hr_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]),
         expand('output/03_deseq/deseq2_extra_120h_comps/{dds_file}/{dds_file}_sig_annots_removed_nc.csv', dds_file=["both_batches", "both_batches_filtered"]),
         expand('output/03_deseq/deseq2_extra_120h_comps/second_batch/{dds_file}/{dds_file}_sig_annots_qmp_nc.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]),
-        expand('output/03_deseq/qmp_treatment/both_batches/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), 
+        ## power analysis
         expand('output/04_power_analysis/treatment/treatment_power_analysis_{dds_file}.csv', dds_file=["both_second_batch_120_filtered", "both_second_batch_120"]),
         expand('output/04_power_analysis/time_treatment/time_treatment_power_analysis_{dds_file}.csv', dds_file=["both_second_batch_120_filtered", "both_second_batch_120"]),
         ## enrichment
@@ -162,6 +164,23 @@ rule deseq2_extra_120h_comps_second_batch:
         bioconductor_container
     script:
         'src/deseq2/deseq2_extra_120h_comps_second_batch.R'
+
+rule deseq2_time_treatment_wald:
+    input:
+        dds_file = 'output/03_deseq/dds_files/dds_{dds_file}.rds',
+        gtf_file = 'data/misc_dmel-r6.63_files/dmel-all-r6.63.gtf'
+    output:
+        dds_wald = 'output/03_deseq/time_treatment_wald/both_batches/{dds_file}/{dds_file}_dds_wald.rds',
+        res_12hr =  'output/03_deseq/time_treatment_wald/both_batches/{dds_file}/{dds_file}_wald_12hr_sig_annots.csv',
+        res_24hr = 'output/03_deseq/time_treatment_wald/both_batches/{dds_file}/{dds_file}_wald_24hr_sig_annots.csv',
+        res_48hr = 'output/03_deseq/time_treatment_wald/both_batches/{dds_file}/{dds_file}_wald_48hr_sig_annots.csv',
+        res_120hr = 'output/03_deseq/time_treatment_wald/both_batches/{dds_file}/{dds_file}_wald_120hr_sig_annots.csv'
+    log:
+        'output/logs/deseq2_time_treatment_wald_{dds_file}.log'
+    singularity:
+        bioconductor_container
+    script:
+        'src/deseq2/deseq2_time_treatment_wald.R'
 
 ## filtered or not pretty similar except for 120 hrs
 rule deseq2_time_treatment_interaction_LRT:
