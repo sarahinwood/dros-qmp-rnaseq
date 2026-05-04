@@ -41,12 +41,10 @@ rule target:
         'output/02_salmon/multiqc/multiqc_report.html',
         ## deseq2
         expand('output/03_deseq/PCA/PCA_timepoint_treatment_{seq_batch}.pdf', seq_batch=["both_batches", "first_batch", "both_second_batch_120"]),
-        expand('output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_interaction_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"both_batches", "both_batches_filtered", 
+        expand('output/03_deseq/time_treatment_interaction_LRT/both_batches/{dds_file}/{dds_file}_interaction_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), 
         expand('output/03_deseq/deseq2_extra_120h_comps/{dds_file}/{dds_file}_sig_annots_removed_nc.csv', dds_file=["both_batches", "both_batches_filtered"]),
-        expand('output/03_deseq/deseq2_extra_120h_comps/first_batch/{dds_file}/{dds_file}_sig_annots_qmp_nc.csv', dds_file=["first_batch", "first_batch_filtered", ]), #"first_batch", "first_batch_filtered", 
-        expand('output/03_deseq/deseq2_extra_120h_comps/second_batch/{dds_file}/{dds_file}_sig_annots_qmp_nc.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"second_batch", "second_batch_filtered", 
-        expand('output/03_deseq/qmp_treatment/both_batches/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), #"both_batches", "both_batches_filtered", 
-        expand('output/03_deseq/qmp_treatment/first_batch/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["first_batch", "first_batch_filtered"]),
+        expand('output/03_deseq/deseq2_extra_120h_comps/second_batch/{dds_file}/{dds_file}_sig_annots_qmp_nc.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]),
+        expand('output/03_deseq/qmp_treatment/both_batches/{dds_file}/{dds_file}_sig_annots.csv', dds_file=["both_second_batch_120", "both_second_batch_120_filtered"]), 
         expand('output/04_power_analysis/treatment/treatment_power_analysis_{dds_file}.csv', dds_file=["both_second_batch_120_filtered", "both_second_batch_120"]),
         expand('output/04_power_analysis/time_treatment/time_treatment_power_analysis_{dds_file}.csv', dds_file=["both_second_batch_120_filtered", "both_second_batch_120"]),
         ## enrichment
@@ -165,36 +163,6 @@ rule deseq2_extra_120h_comps_second_batch:
     script:
         'src/deseq2/deseq2_extra_120h_comps_second_batch.R'
 
-rule deseq2_extra_120h_comps_first_batch:
-    input:
-        dds_file = 'output/03_deseq/dds_files/dds_{dds_file}.rds',
-        gtf_file = 'data/misc_dmel-r6.63_files/dmel-all-r6.63.gtf'
-    output:
-        res_qmp_nc = 'output/03_deseq/deseq2_extra_120h_comps/first_batch/{dds_file}/{dds_file}_sig_annots_qmp_nc.csv',
-        res_removed_nc = 'output/03_deseq/deseq2_extra_120h_comps/first_batch/{dds_file}/{dds_file}_sig_annots_removed_nc.csv',
-        res_removed_qmp = 'output/03_deseq/deseq2_extra_120h_comps/first_batch/{dds_file}/{dds_file}_sig_annots_removed_qmp.csv'
-    log:
-        'output/logs/deseq2_extra_120h_comps_first_batch_{dds_file}.log'
-    singularity:
-        bioconductor_container
-    script:
-        'src/deseq2/deseq2_extra_120h_comps_first_batch.R'
-
-rule deseq2_extra_120h_comps:
-    input:
-        dds_file = 'output/03_deseq/dds_files/dds_{dds_file}.rds',
-        gtf_file = 'data/misc_dmel-r6.63_files/dmel-all-r6.63.gtf'
-    output:
-        res_qmp_nc = 'output/03_deseq/deseq2_extra_120h_comps/{dds_file}/{dds_file}_sig_annots_qmp_nc.csv',
-        res_removed_nc = 'output/03_deseq/deseq2_extra_120h_comps/{dds_file}/{dds_file}_sig_annots_removed_nc.csv',
-        res_removed_qmp = 'output/03_deseq/deseq2_extra_120h_comps/{dds_file}/{dds_file}_sig_annots_removed_qmp.csv'
-    log:
-        'output/logs/deseq2_extra_120h_comps_{dds_file}.log'
-    singularity:
-        bioconductor_container
-    script:
-        'src/deseq2/deseq2_extra_120h_comps.R'
-
 ## filtered or not pretty similar except for 120 hrs
 rule deseq2_time_treatment_interaction_LRT:
     input:
@@ -210,20 +178,6 @@ rule deseq2_time_treatment_interaction_LRT:
         bioconductor_container
     script:
         'src/deseq2/deseq2_time_treatment_interaction_LRT.R'
-
-rule deseq2_qmp_treatment_first_batch:
-    input:
-        dds_file = 'output/03_deseq/dds_files/dds_{dds_file}.rds',
-        gtf_file = 'data/misc_dmel-r6.63_files/dmel-all-r6.63.gtf'
-    output:
-        dds = 'output/03_deseq/qmp_treatment/first_batch/{dds_file}/{dds_file}_dds.rds',
-        sig_annots_treatment = 'output/03_deseq/qmp_treatment/first_batch/{dds_file}/{dds_file}_sig_annots.csv'
-    log:
-        'output/logs/deseq2_qmp_treatment_furst_batch_{dds_file}.log'
-    singularity:
-        bioconductor_container
-    script:
-        'src/deseq2/deseq2_qmp_treatment_first_batch.R'
 
 rule deseq2_qmp_treatment:
     input:
